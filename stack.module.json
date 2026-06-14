@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "caddy",
+  "repo": "caddy-stack-module",
+  "runtimeId": "caddy",
+  "lifecycle": "active",
+  "dependencies": [
+    "stack-foundation"
+  ],
+  "overlays": [
+    "stack.compose/caddy.yml",
+    "stack.config/caddy"
+  ]
+}
