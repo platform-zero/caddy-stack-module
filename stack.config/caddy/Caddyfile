@@ -36,10 +36,7 @@
 		format filter {
 			wrap json
 			request>headers delete
-			request>uri delete
 			resp_headers delete
-			request>remote_ip ip_mask 24 48
-			request>client_ip ip_mask 24 48
 		}
 	}
 }
