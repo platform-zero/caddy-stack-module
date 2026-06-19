@@ -7,8 +7,19 @@
   "dependencies": [
     "stack-foundation"
   ],
+  "runtimeDependencies": [
+    "stack-foundation",
+    "keycloak-auth-gateway",
+    "portal"
+  ],
+  "contracts": [
+    "module-contract"
+  ],
+  "smoke": "external-only",
+  "smokeUnsupportedReason": "requires generated bundle context, deployed networking, secrets, or service dependencies",
   "overlays": [
     "stack.compose/caddy.yml",
     "stack.config/caddy"
-  ]
+  ],
+  "testAssets": []
 }
