@@ -150,6 +150,7 @@ services:
         else
           touch /ca/caddy-ca.crt
         fi
+        chmod 755 /ca
         chmod 644 /ca/caddy-ca.crt
 
         rm -f /data/caddy/locks/*.lock 2>/dev/null || true
@@ -162,6 +163,7 @@ services:
           if [ -f /certs/pki/authorities/local/root.crt ]; then
             cat /certs/pki/authorities/local/root.crt >> /ca/caddy-ca.crt
             echo "" >> /ca/caddy-ca.crt
+            chmod 755 /ca
             chmod 644 /ca/caddy-ca.crt
             echo "Appended Caddy local CA to /ca/caddy-ca.crt"
             break
