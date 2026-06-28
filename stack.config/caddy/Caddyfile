@@ -93,9 +93,9 @@
 		import keycloak_auth_base {args[0]}
 
 		@onboarding_required_{args[0]} header Remote-Groups *onboarding_required*
-		redir @onboarding_required_{args[0]} https://onboarding.{$DOMAIN}/start temporary
+		redir @onboarding_required_{args[0]} https://onboarding.{$DOMAIN}/ temporary
 		@onboarding_required_legacy_{args[0]} header Remote-Groups *onboarding-required*
-		redir @onboarding_required_legacy_{args[0]} https://onboarding.{$DOMAIN}/start temporary
+		redir @onboarding_required_legacy_{args[0]} https://onboarding.{$DOMAIN}/ temporary
 	}
 }
 
@@ -143,33 +143,18 @@ onboarding.{$DOMAIN} {
 		request_header -X-Remote-Email
 		request_header -X-Trusted-Proxy-Secret
 
-		@onboarding_public path /start /api/invites/signup
-		reverse_proxy @onboarding_public onboarding:8080 {
+		import keycloak_auth_base onboarding
+		reverse_proxy onboarding:8080 {
 			header_up -Remote-User
 			header_up -Remote-Groups
 			header_up -Remote-Name
 			header_up -Remote-Email
-			header_up -X-Remote-User
-			header_up -X-Remote-Groups
-			header_up -X-Remote-Name
-			header_up -X-Remote-Email
-				header_up X-Trusted-Proxy-Secret {$ONBOARDING_TRUSTED_PROXY_SECRET}
+			header_up X-Remote-User {header.Remote-User}
+			header_up X-Remote-Groups {header.Remote-Groups}
+			header_up X-Remote-Name {header.Remote-Name}
+			header_up X-Remote-Email {header.Remote-Email}
+			header_up X-Trusted-Proxy-Secret {$ONBOARDING_TRUSTED_PROXY_SECRET}
 		}
-
-			handle {
-				import keycloak_auth_base onboarding
-				reverse_proxy onboarding:8080 {
-				header_up -Remote-User
-				header_up -Remote-Groups
-				header_up -Remote-Name
-				header_up -Remote-Email
-				header_up X-Remote-User {header.Remote-User}
-					header_up X-Remote-Groups {header.Remote-Groups}
-					header_up X-Remote-Name {header.Remote-Name}
-					header_up X-Remote-Email {header.Remote-Email}
-					header_up X-Trusted-Proxy-Secret {$ONBOARDING_TRUSTED_PROXY_SECRET}
-				}
-			}
 	}
 }
 
@@ -394,6 +379,47 @@ erpnext.{$DOMAIN} {
 	}
 }
 # webservices-component-end erpnext
+
+# Gerald-specific Autobattler app.
+# webservices-component-start autobattler
+autobattler.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth autobattler
+		reverse_proxy autobattler:8787 {
+			header_up Remote-User {header.Remote-User}
+			header_up Remote-Groups {header.Remote-Groups}
+			header_up Remote-Name {header.Remote-Name}
+			header_up Remote-Email {header.Remote-Email}
+			header_up X-Trusted-Proxy-Secret {$AUTOBATTLER_TRUSTED_PROXY_SECRET}
+		}
+	}
+}
+# webservices-component-end autobattler
+
+# Gerald-specific TAS events dashboard.
+# webservices-component-start tas-dashboard
+tas-events.{$DOMAIN}, tas.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth tas_events
+		reverse_proxy tas-dashboard:8080
+	}
+}
+# webservices-component-end tas-dashboard
+
+# qBittorrent (protected)
+# webservices-component-start qbittorrent
+qbittorrent.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth qbittorrent
+		reverse_proxy qbittorrent:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+# webservices-component-end qbittorrent
 
 # BookStack API (internal token only - for data-fetcher and search services)
 # webservices-component-start bookstack
@@ -1003,7 +1029,9 @@ pipeline.{$DOMAIN} {
 	route {
 		import keycloak_auth pipeline
 		import keycloak_group_allow pipeline admins|operators
-		reverse_proxy airflow-webserver:8080
+		reverse_proxy airflow-webserver:8080 {
+			header_up Remote-User {header.Remote-User}
+		}
 	}
 }
 # webservices-component-end pipeline
