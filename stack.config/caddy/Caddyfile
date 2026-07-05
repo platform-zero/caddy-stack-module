@@ -672,7 +672,7 @@ api.mastodon.{$DOMAIN}, api.social.{$DOMAIN} {
 
 		import keycloak_auth portal
 		import keycloak_group_allow portal admins|operators|users
-		reverse_proxy portal:8080
+		reverse_proxy portal:3000
 	}
 }
 
@@ -988,14 +988,6 @@ clickhouse.{$DOMAIN} {
 	}
 }
 
-# vLLM Router (protected)
-vllm-router.{$DOMAIN} {
-	import access_observability
-	route {
-		import keycloak_auth vllm_router
-		reverse_proxy vllm-router:8010
-	}
-}
 # webservices-component-end disabled
 
 # Forgejo (Git Forge) - with OIDC authentication via Keycloak
