@@ -44,7 +44,7 @@
 (keycloak_auth_base) {
 	route {
 		@trusted_proxy_{args[0]} {
-			header X-Trusted-Proxy-Secret {$MODEL_CONTEXT_PROXY_AUTH_SECRET}
+			header X-Trusted-Proxy-Secret {$MODEL_CONTEXT_PROXY_AUTH_SECRET:__disabled__}
 			remote_ip private_ranges
 		}
 		handle @trusted_proxy_{args[0]} {
