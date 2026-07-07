@@ -9,7 +9,6 @@ services:
       - "443:443/udp"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      - "${WORKSPACE_RUNTIME_PUBLIC_HOST}:${WORKSPACE_RUNTIME_PUBLIC_ADDRESS}"
     networks:
       caddy:
         aliases:
@@ -31,7 +30,6 @@ services:
           - api.files.${DOMAIN}
           - onlyoffice.${DOMAIN}
           - pipeline.${DOMAIN}
-          - chatgpt-connector.${DOMAIN}
           - models.${DOMAIN}
           - matrix.${DOMAIN}
           - matrix-auth.${DOMAIN}
@@ -50,7 +48,6 @@ services:
           - kopia.${DOMAIN}
           - mail.${DOMAIN}
           - forgejo.${DOMAIN}
-          - workspaces.${DOMAIN}
           - api.vaultwarden.${DOMAIN}
           - api.pass.${DOMAIN}
           - api.mastodon.${DOMAIN}
@@ -101,14 +98,12 @@ services:
           - api.matrix.${DOMAIN}
           - matrix-rtc.${DOMAIN}
           - search.${DOMAIN}
-          - chatgpt-connector.${DOMAIN}
           - pipeline.${DOMAIN}
           - models.${DOMAIN}
           - seafile.${DOMAIN}
           - api.seafile.${DOMAIN}
           - api.files.${DOMAIN}
           - onlyoffice.${DOMAIN}
-          - workspaces.${DOMAIN}
       mailserver:
       memcached:
       matrix-internal:
@@ -118,13 +113,10 @@ services:
       DOMAIN: ${DOMAIN}
       STACK_ADMIN_EMAIL: ${STACK_ADMIN_EMAIL}
       MAIL_DOMAIN: ${MAIL_DOMAIN}
-      WORKSPACE_PROXY_AUTH_SECRET: ${WORKSPACE_PROXY_AUTH_SECRET}
       OPENSEARCH_BASIC_AUTH: ${OPENSEARCH_BASIC_AUTH}
       BOOKSTACK_INTERNAL_API_TOKEN: ${BOOKSTACK_INTERNAL_API_TOKEN}
       HOMEASSISTANT_TRUSTED_PROXY_SECRET: ${HOMEASSISTANT_TRUSTED_PROXY_SECRET}
       ONBOARDING_TRUSTED_PROXY_SECRET: ${ONBOARDING_TRUSTED_PROXY_SECRET}
-      CHATGPT_CONNECTOR_TRUSTED_PROXY_SECRET: ${CHATGPT_CONNECTOR_TRUSTED_PROXY_SECRET}
-      WORKSPACE_RUNTIME_PUBLIC_HOST: ${WORKSPACE_RUNTIME_PUBLIC_HOST}
       KOPIA_PROXY_AUTHORIZATION: ${KOPIA_PROXY_AUTHORIZATION}
       VAULTWARDEN_ORG_IDENTIFIER: ${VAULTWARDEN_ORG_IDENTIFIER}
       VAULTWARDEN_ORG_ID: ${VAULTWARDEN_ORG_ID}
