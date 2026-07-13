@@ -387,34 +387,6 @@ erpnext.{$DOMAIN} {
 }
 # webservices-component-end erpnext
 
-# Gerald-specific Autobattler app.
-# webservices-component-start autobattler
-autobattler.{$DOMAIN} {
-	import access_observability
-	route {
-		import keycloak_auth autobattler
-		reverse_proxy autobattler:8787 {
-			header_up Remote-User {header.Remote-User}
-			header_up Remote-Groups {header.Remote-Groups}
-			header_up Remote-Name {header.Remote-Name}
-			header_up Remote-Email {header.Remote-Email}
-			header_up X-Trusted-Proxy-Secret {$AUTOBATTLER_TRUSTED_PROXY_SECRET}
-		}
-	}
-}
-# webservices-component-end autobattler
-
-# Gerald-specific TAS events dashboard.
-# webservices-component-start tas-dashboard
-tas-events.{$DOMAIN}, tas.{$DOMAIN} {
-	import access_observability
-	route {
-		import keycloak_auth tas_events
-		reverse_proxy tas-dashboard:8080
-	}
-}
-# webservices-component-end tas-dashboard
-
 # qBittorrent (protected)
 # webservices-component-start qbittorrent
 qbittorrent.{$DOMAIN} {
