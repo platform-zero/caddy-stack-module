@@ -19,7 +19,8 @@
   "smokeUnsupportedReason": "requires generated bundle context, deployed networking, secrets, or service dependencies",
   "overlays": [
     "stack.compose/caddy.yml",
-    "stack.config/caddy"
+    "stack.config/caddy",
+    "stack.runtime.yaml"
   ],
   "testAssets": []
 }

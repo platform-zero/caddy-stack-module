@@ -1,0 +1,167 @@
+---
+schemaVersion: 1
+module: "caddy"
+target: "core"
+services:
+  caddy:
+    image: "caddy:2.11.3@sha256:ec18ee54aab3315c22e25f3b2babda73ff8007d39b13b3bd1bfffa2f0444c7d9"
+    containerName: "caddy"
+    lifecycle: "daemon"
+    updatePolicy: "registry"
+    placement: "rootful"
+    environment:
+      DOMAIN: "${DOMAIN}"
+      STACK_ADMIN_EMAIL: "${STACK_ADMIN_EMAIL}"
+      MAIL_DOMAIN: "${MAIL_DOMAIN}"
+      OPENSEARCH_BASIC_AUTH: "${OPENSEARCH_BASIC_AUTH}"
+      BOOKSTACK_INTERNAL_API_TOKEN: "${BOOKSTACK_INTERNAL_API_TOKEN}"
+      MODEL_CONTEXT_PROXY_AUTH_SECRET: "${MODEL_CONTEXT_PROXY_AUTH_SECRET}"
+      HOMEASSISTANT_TRUSTED_PROXY_SECRET: "${HOMEASSISTANT_TRUSTED_PROXY_SECRET}"
+      ONBOARDING_TRUSTED_PROXY_SECRET: "${ONBOARDING_TRUSTED_PROXY_SECRET}"
+      KOPIA_PROXY_AUTHORIZATION: "${KOPIA_PROXY_AUTHORIZATION}"
+      VAULTWARDEN_ORG_IDENTIFIER: "${VAULTWARDEN_ORG_IDENTIFIER}"
+      VAULTWARDEN_ORG_ID: "${VAULTWARDEN_ORG_ID}"
+      MATRIX_AUTHENTICATION_SERVICE_ACTIVE: "${MATRIX_AUTHENTICATION_SERVICE_ACTIVE:-false}"
+    networks:
+      caddy:
+        aliases:
+        - "www.${DOMAIN}"
+        - "grafana.${DOMAIN}"
+        - "alerts.${DOMAIN}"
+        - "vaultwarden.${DOMAIN}"
+        - "planka.${DOMAIN}"
+        - "bookstack.${DOMAIN}"
+        - "sogo.${DOMAIN}"
+        - "jellyfin.${DOMAIN}"
+        - "donetick.${DOMAIN}"
+        - "erpnext.${DOMAIN}"
+        - "jupyterhub.${DOMAIN}"
+        - "portal.${DOMAIN}"
+        - "homepage.${DOMAIN}"
+        - "seafile.${DOMAIN}"
+        - "api.seafile.${DOMAIN}"
+        - "api.files.${DOMAIN}"
+        - "onlyoffice.${DOMAIN}"
+        - "pipeline.${DOMAIN}"
+        - "models.${DOMAIN}"
+        - "matrix.${DOMAIN}"
+        - "matrix-auth.${DOMAIN}"
+        - "api.matrix.${DOMAIN}"
+        - "matrix-rtc.${DOMAIN}"
+        - "element.${DOMAIN}"
+        - "api.element.${DOMAIN}"
+        - "api.chat.${DOMAIN}"
+        - "homeassistant.${DOMAIN}"
+        - "direct.homeassistant.${DOMAIN}"
+        - "api.homeassistant.${DOMAIN}"
+        - "keycloak.${DOMAIN}"
+        - "keycloak-auth.${DOMAIN}"
+        - "keycloak-whoami.${DOMAIN}"
+        - "onboarding.${DOMAIN}"
+        - "kopia.${DOMAIN}"
+        - "mail.${DOMAIN}"
+        - "forgejo.${DOMAIN}"
+        - "api.vaultwarden.${DOMAIN}"
+        - "api.pass.${DOMAIN}"
+        - "api.mastodon.${DOMAIN}"
+        - "api.social.${DOMAIN}"
+      postgres: null
+      mariadb: null
+      qdrant: null
+      ai:
+        aliases:
+        - "${DOMAIN}"
+        - "www.${DOMAIN}"
+        - "keycloak.${DOMAIN}"
+        - "keycloak-auth.${DOMAIN}"
+        - "keycloak-whoami.${DOMAIN}"
+        - "onboarding.${DOMAIN}"
+        - "grafana.${DOMAIN}"
+        - "jupyterhub.${DOMAIN}"
+        - "vaultwarden.${DOMAIN}"
+        - "api.vaultwarden.${DOMAIN}"
+        - "api.pass.${DOMAIN}"
+        - "prometheus.${DOMAIN}"
+        - "alerts.${DOMAIN}"
+        - "portal.${DOMAIN}"
+        - "homepage.${DOMAIN}"
+        - "ntfy.${DOMAIN}"
+        - "mastodon.${DOMAIN}"
+        - "api.mastodon.${DOMAIN}"
+        - "api.social.${DOMAIN}"
+        - "forgejo.${DOMAIN}"
+        - "bookstack.${DOMAIN}"
+        - "sogo.${DOMAIN}"
+        - "jellyfin.${DOMAIN}"
+        - "donetick.${DOMAIN}"
+        - "erpnext.${DOMAIN}"
+        - "api.bookstack.${DOMAIN}"
+        - "planka.${DOMAIN}"
+        - "kopia.${DOMAIN}"
+        - "homeassistant.${DOMAIN}"
+        - "direct.homeassistant.${DOMAIN}"
+        - "api.homeassistant.${DOMAIN}"
+        - "api.home.${DOMAIN}"
+        - "mail.${DOMAIN}"
+        - "element.${DOMAIN}"
+        - "api.element.${DOMAIN}"
+        - "api.chat.${DOMAIN}"
+        - "matrix.${DOMAIN}"
+        - "matrix-auth.${DOMAIN}"
+        - "api.matrix.${DOMAIN}"
+        - "matrix-rtc.${DOMAIN}"
+        - "search.${DOMAIN}"
+        - "pipeline.${DOMAIN}"
+        - "models.${DOMAIN}"
+        - "seafile.${DOMAIN}"
+        - "api.seafile.${DOMAIN}"
+        - "api.files.${DOMAIN}"
+        - "onlyoffice.${DOMAIN}"
+      mailserver: null
+      memcached: null
+      matrix-internal: null
+      mastodon-internal: null
+      monitoring: null
+    volumes:
+    - "caddy_data:/data"
+    - "caddy_config:/config"
+    - "caddy_certs:/certs"
+    - "caddy_ca:/ca"
+    - "./configs/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
+    - "./configs/vaultwarden/index.html:/srv/vaultwarden/index.html:ro"
+    - "/var/log/webservices/caddy:/var/log/caddy"
+    ports:
+    - "80:80"
+    - "443:443"
+    - "443:443/udp"
+    health:
+      test:
+      - "CMD-SHELL"
+      - "test -s /ca/caddy-ca.crt && \\\nwget --quiet --tries=1 --spider --timeout=5\
+        \ http://127.0.0.1:2019/config/ && \\\nwget --quiet --tries=1 --spider --timeout=5\
+        \ http://127.0.0.1:2019/reverse_proxy/upstreams && \\\ncaddy validate --config\
+        \ /etc/caddy/Caddyfile --adapter caddyfile 2>&1 | grep -q \"Valid configuration\"\
+        \n"
+      interval: "5s"
+      timeout: "10s"
+      retries: 12
+      start_period: "45s"
+    entrypoint:
+    - "/bin/sh"
+    - "-c"
+    - "BUNDLE_SRC=\"/etc/ssl/certs/ca-certificates.crt\"\nif [ ! -f \"$$BUNDLE_SRC\"\
+      \ ]; then\n  BUNDLE_SRC=\"/etc/ssl/cert.pem\"\nfi\n\nif [ -f \"$$BUNDLE_SRC\"\
+      \ ]; then\n  cp \"$$BUNDLE_SRC\" /ca/caddy-ca.crt\nelse\n  touch /ca/caddy-ca.crt\n\
+      fi\nchmod 755 /ca\nchmod 644 /ca/caddy-ca.crt\n\nrm -f /data/caddy/locks/*.lock\
+      \ 2>/dev/null || true\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\
+      \ &\ncaddy_pid=$$!\n\ntrap 'kill -TERM \"$$caddy_pid\" 2>/dev/null || true;\
+      \ wait \"$$caddy_pid\"' INT TERM\n\nfor _ in $$(seq 1 20); do\n  if [ -f /certs/pki/authorities/local/root.crt\
+      \ ]; then\n    cat /certs/pki/authorities/local/root.crt >> /ca/caddy-ca.crt\n\
+      \    echo \"\" >> /ca/caddy-ca.crt\n    chmod 755 /ca\n    chmod 644 /ca/caddy-ca.crt\n\
+      \    echo \"Appended Caddy local CA to /ca/caddy-ca.crt\"\n    break\n  fi\n\
+      \  sleep 1\ndone\n\nwait \"$$caddy_pid\"\n"
+    restart: "unless-stopped"
+    extraHosts:
+    - "host.docker.internal:host-gateway"
+networks: {}
+volumes: {}
