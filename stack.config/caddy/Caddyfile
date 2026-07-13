@@ -31,7 +31,11 @@
 # user/service fields instead.
 (access_observability) {
 	log {
-		output stdout
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 10
+			roll_keep_for 168h
+		}
 		format filter {
 			wrap json
 			request>headers delete
@@ -171,8 +175,8 @@ kopia.{$DOMAIN} {
 }
 # webservices-component-end kopia
 
-# webservices-component-start observability
 # Prometheus (protected with forward_auth)
+# webservices-component-start prometheus
 prometheus.{$DOMAIN} {
 	import access_observability
 	route {
@@ -181,8 +185,10 @@ prometheus.{$DOMAIN} {
 		reverse_proxy prometheus:9090
 	}
 }
+# webservices-component-end prometheus
 
 # Alertmanager (protected with forward_auth)
+# webservices-component-start alertmanager
 alerts.{$DOMAIN} {
 	import access_observability
 	route {
@@ -191,8 +197,10 @@ alerts.{$DOMAIN} {
 		reverse_proxy alertmanager:9093
 	}
 }
+# webservices-component-end alertmanager
 
 # Grafana (protected with forward_auth)
+# webservices-component-start grafana
 grafana.{$DOMAIN} {
 	import access_observability
 	@grafana_public path /public/* /public/build/* /public/img/* /public/plugins/* /public/app/*
@@ -213,7 +221,7 @@ grafana.{$DOMAIN} {
 		}
 	}
 }
-# webservices-component-end observability
+# webservices-component-end grafana
 
 # Vaultwarden (OIDC)
 # webservices-component-start vaultwarden
@@ -497,7 +505,7 @@ onlyoffice.{$DOMAIN} {
 
 # Matrix (Synapse) - Client-Server API with access token authentication
 # Matrix clients authenticate using access tokens, so no forward_auth needed
-# webservices-component-start matrix
+# webservices-component-start synapse
 matrix.{$DOMAIN} {
 	import access_observability
 {{MATRIX_CADDY_AUTH_ROUTES}}
@@ -607,7 +615,7 @@ matrix-rtc.{$DOMAIN} {
 
 	respond 404
 }
-# webservices-component-end matrix
+# webservices-component-end synapse
 
 # Mastodon (web)
 # With OMNIAUTH_ONLY=true, Mastodon auto-redirects unauthenticated users to OIDC
