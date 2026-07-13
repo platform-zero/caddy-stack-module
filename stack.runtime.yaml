@@ -25,6 +25,7 @@ services:
     networks:
       caddy:
         aliases:
+        - "caddy"
         - "www.${DOMAIN}"
         - "grafana.${DOMAIN}"
         - "alerts.${DOMAIN}"
@@ -70,6 +71,7 @@ services:
       qdrant: null
       ai:
         aliases:
+        - "caddy"
         - "${DOMAIN}"
         - "www.${DOMAIN}"
         - "keycloak.${DOMAIN}"
