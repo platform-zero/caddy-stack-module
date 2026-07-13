@@ -661,18 +661,6 @@ homepage.{$DOMAIN} {
 }
 # webservices-component-end portal
 
-# Sovereign compute progression layer.
-# webservices-component-start progression
-progress.{$DOMAIN} {
-	import access_observability
-	route {
-		import keycloak_auth progression
-		import keycloak_group_allow progression admins|operators|users
-		reverse_proxy progression:8130
-	}
-}
-# webservices-component-end progression
-
 # Portal - www redirects to apex
 www.{$DOMAIN} {
 	import access_observability
