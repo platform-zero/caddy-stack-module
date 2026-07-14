@@ -6,7 +6,7 @@
 - Lifecycle: `active`
 
 ## Owned overlays
-- `stack.compose/caddy.yml`
+- `stack.runtime.yaml`
 - `stack.config/caddy`
 
 ## Dependencies
