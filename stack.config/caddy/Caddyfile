@@ -1,7 +1,7 @@
 ###############################################
 # Caddy config for webservices
 #
-# - Official Caddy image + a static Caddyfile (no docker label proxy).
+# - Official Caddy image + a static Caddyfile (no dynamic label proxy).
 # - Most apps are protected with Keycloak-backed forward_auth where labels
 #   previously specified shared authentication.
 #
@@ -49,7 +49,7 @@
 	route {
 		@trusted_proxy_{args[0]} {
 			header X-Trusted-Proxy-Secret {$MODEL_CONTEXT_PROXY_AUTH_SECRET:__disabled__}
-			remote_ip private_ranges
+			remote_ip {$TRUSTED_PROXY_SOURCE_RANGES:127.0.0.1/32 ::1/128}
 		}
 		handle @trusted_proxy_{args[0]} {
 			request_header Remote-User {http.request.header.X-Remote-User}
