@@ -703,6 +703,37 @@ jupyterhub.{$DOMAIN} {
 }
 # webservices-component-end jupyterhub
 
+# Workload Spawner - operator UI/API plus wildcard spawned workload routes.
+# webservices-component-start workload-spawner
+spawner.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth workload-spawner
+		import keycloak_group_allow workload-spawner admins|operators
+		reverse_proxy workload-spawner-api:8080 {
+			header_up Remote-User {header.Remote-User}
+			header_up Remote-Groups {header.Remote-Groups}
+			header_up Remote-Name {header.Remote-Name}
+			header_up Remote-Email {header.Remote-Email}
+		}
+	}
+}
+
+*.apps.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth workload-spawner-app
+		import keycloak_group_allow workload-spawner-app admins|operators
+		reverse_proxy workload-spawner-router:8081 {
+			header_up Remote-User {header.Remote-User}
+			header_up Remote-Groups {header.Remote-Groups}
+			header_up Remote-Name {header.Remote-Name}
+			header_up Remote-Email {header.Remote-Email}
+		}
+	}
+}
+# webservices-component-end workload-spawner
+
 # Home Assistant - Uses Keycloak edge auth
 # Webhooks must bypass auth
 # webservices-component-start homeassistant
@@ -865,6 +896,18 @@ forgejo.{$DOMAIN} {
 	reverse_proxy forgejo:3000
 }
 # webservices-component-end forgejo
+
+# webservices-component-start searxng
+# SearXNG private metasearch UI and JSON API.
+websearch.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth websearch
+		import keycloak_group_allow websearch admins|operators|agents
+		reverse_proxy searxng:8080
+	}
+}
+# webservices-component-end searxng
 
 # webservices-component-start search
 # OpenSearch API (protected - all authenticated users)
