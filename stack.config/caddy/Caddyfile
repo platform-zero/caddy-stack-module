@@ -370,6 +370,11 @@ donetick.{$DOMAIN} {
 		import keycloak_group_allow donetick users|operators|admins
 		reverse_proxy donetick:2021 {
 			header_up Authorization {vars.donetick_upstream_authorization}
+			# Donetick closes idle upstream sockets. OAuth callback POSTs cannot
+			# be retried after Caddy discovers a reused socket is stale.
+			transport http {
+				keepalive off
+			}
 		}
 	}
 }
