@@ -599,6 +599,13 @@ matrix-rtc.{$DOMAIN} {
 # webservices-component-start mastodon
 mastodon.{$DOMAIN}, social.{$DOMAIN} {
 	import access_observability
+
+	# Mastodon advertises this host as its streaming API endpoint. Route the
+	# WebSocket path before the general Rails upstream so native clients can
+	# subscribe to live notification updates.
+	@mastodon_streaming path /api/v1/streaming /api/v1/streaming/*
+	reverse_proxy @mastodon_streaming mastodon-streaming:4000
+
 	reverse_proxy mastodon-web:3000 {
 		# Prevent timeout on slow initial requests
 		transport http {
