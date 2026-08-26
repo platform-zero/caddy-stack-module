@@ -81,7 +81,16 @@
 					copy_headers X-Auth-Request-Preferred-Username>Remote-User X-Auth-Request-Groups>Remote-Groups X-Auth-Request-Email>Remote-Email
 					@unauth status 401 403
 					handle_response @unauth {
-						redir https://keycloak-auth.{$DOMAIN}/oauth2/start?rd={scheme}://{host}{uri} temporary
+						route {
+							# Preserve nested query strings (notably Home Assistant's mobile
+							# OAuth client_id and redirect_uri) without interpolating them
+							# into another query string. oauth2-proxy reads this header before
+							# redirecting to Keycloak.
+							rewrite * /oauth2/start
+							reverse_proxy keycloak-auth-gateway:4180 {
+								header_up X-Auth-Request-Redirect {scheme}://{host}{orig_uri}
+							}
+						}
 					}
 				}
 				log_append auth_user {http.request.header.Remote-User}
