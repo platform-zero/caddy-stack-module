@@ -591,7 +591,9 @@ matrix-rtc.{$DOMAIN} {
 	@matrix_rtc_sfu path /livekit/sfu /livekit/sfu/*
 	handle @matrix_rtc_sfu {
 		uri strip_prefix /livekit/sfu
-		reverse_proxy livekit:7880 {
+		# LiveKit owns host RTC transport under its dedicated Linux authority.
+		# Use Podman's stable host gateway instead of cross-container DNS.
+		reverse_proxy host.containers.internal:7880 {
 			header_up Host {host}
 			header_up X-Forwarded-Server {host}
 			header_up X-Real-IP {remote_host}
