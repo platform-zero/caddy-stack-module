@@ -283,18 +283,6 @@ vaultwarden.{$DOMAIN}, pass.{$DOMAIN} {
 	}
 }
 
-# Vaultwarden API/mobile endpoints
-api.vaultwarden.{$DOMAIN}, api.pass.{$DOMAIN} {
-	import access_observability
-
-	# Native Bitwarden clients use these API and websocket endpoints.
-	@vw_api path /api/* /identity/* /notifications/hub /notifications/hub/*
-	handle @vw_api {
-		reverse_proxy vaultwarden:80
-	}
-
-	respond 404
-}
 # webservices-component-end vaultwarden
 
 # Planka (uses OIDC)
@@ -458,7 +446,7 @@ seafile.{$DOMAIN}, files.{$DOMAIN} {
 
 # Seafile API (for API token authentication - bypasses forward_auth)
 # API clients authenticate using Seafile API tokens in Authorization header
-api.seafile.{$DOMAIN}, api.files.{$DOMAIN} {
+files-native.{$DOMAIN} {
 	import access_observability
 	# Seafile API endpoints
 	@api path /api/* /api2/* /seafdav*
@@ -558,20 +546,6 @@ element.{$DOMAIN}, chat.{$DOMAIN} {
 	reverse_proxy element:80
 }
 
-# Element mobile/client bootstrap endpoint.
-# Element native apps authenticate against Matrix APIs, but this host provides a
-# stable config/bootstrap surface without browser SSO assumptions.
-api.element.{$DOMAIN}, api.chat.{$DOMAIN} {
-	import access_observability
-
-	@config path /config.json /.well-known/matrix/client
-	handle @config {
-		reverse_proxy element:80
-	}
-
-	respond 404
-}
-
 # MatrixRTC backend for Element Call. Authentication is handled by Matrix OpenID
 # tokens at the MatrixRTC authorization service; do not put edge SSO in this path.
 matrix-rtc.{$DOMAIN} {
@@ -622,18 +596,6 @@ mastodon.{$DOMAIN}, social.{$DOMAIN} {
 	}
 }
 
-# Mastodon API/mobile endpoints
-api.mastodon.{$DOMAIN}, api.social.{$DOMAIN} {
-	import access_observability
-
-	# Native apps use OAuth plus /api/v*.
-	@mastodon_api path /api/* /oauth/* /.well-known/* /nodeinfo/* /.well-known/webfinger
-	handle @mastodon_api {
-		reverse_proxy mastodon-web:3000
-	}
-
-	respond 404
-}
 # webservices-component-end mastodon
 
 # webservices-component-start !portal
@@ -774,10 +736,15 @@ homeassistant.{$DOMAIN}, home.{$DOMAIN} {
 
 	# All other paths use forward_auth
 	route {
+		# The shared forward-auth handler removes Authorization before contacting
+		# oauth2-proxy. Preserve Home Assistant's bearer token separately so its
+		# authenticated REST endpoints still receive it on the upstream hop.
+		vars homeassistant_upstream_authorization {http.request.header.Authorization}
 		import keycloak_auth homeassistant
 		import keycloak_group_allow homeassistant admins|operators|users
 		reverse_proxy homeassistant:8123 {
 			header_up -X-Forwarded-For
+			header_up Authorization {vars.homeassistant_upstream_authorization}
 			header_up Remote-User {header.Remote-User}
 			header_up Remote-Groups {header.Remote-Groups}
 			header_up Remote-Name {header.Remote-Name}
@@ -789,7 +756,7 @@ homeassistant.{$DOMAIN}, home.{$DOMAIN} {
 
 # Direct Home Assistant access for device pairing and clients that cannot use Keycloak.
 # This route is protected by Home Assistant's own auth provider, not edge SSO.
-direct.homeassistant.{$DOMAIN}, direct.home.{$DOMAIN} {
+home-native.{$DOMAIN} {
 	import access_observability
 	reverse_proxy homeassistant:8123 {
 		header_up -X-Forwarded-For
@@ -806,66 +773,6 @@ direct.homeassistant.{$DOMAIN}, direct.home.{$DOMAIN} {
 	}
 }
 
-# Home Assistant API (for programmatic access with long-lived access tokens)
-# API clients authenticate using HA long-lived access tokens in Authorization header
-api.homeassistant.{$DOMAIN}, api.home.{$DOMAIN} {
-	import access_observability
-	# API endpoints (bypass forward_auth, rely on HA's token auth)
-	@api path /api/*
-	handle @api {
-		reverse_proxy homeassistant:8123 {
-			header_up -X-Forwarded-For
-			header_up -Remote-User
-			header_up -Remote-Groups
-			header_up -Remote-Name
-			header_up -Remote-Email
-			header_up -X-Remote-User
-			header_up -X-Remote-Groups
-			header_up -X-Remote-Name
-			header_up -X-Remote-Email
-			header_up -X-Forwarded-User
-			header_up -X-Trusted-Proxy-Secret
-		}
-	}
-
-	# Webhooks (no auth required - webhook IDs are secret)
-	@webhooks path /api/webhook/*
-	handle @webhooks {
-		reverse_proxy homeassistant:8123 {
-			header_up -Remote-User
-			header_up -Remote-Groups
-			header_up -Remote-Name
-			header_up -Remote-Email
-			header_up -X-Remote-User
-			header_up -X-Remote-Groups
-			header_up -X-Remote-Name
-			header_up -X-Remote-Email
-			header_up -X-Forwarded-User
-			header_up -X-Trusted-Proxy-Secret
-		}
-	}
-
-	# WebSocket API (requires token in connection URL)
-	@websocket path /api/websocket
-	handle @websocket {
-		reverse_proxy homeassistant:8123 {
-			header_up -X-Forwarded-For
-			header_up -Remote-User
-			header_up -Remote-Groups
-			header_up -Remote-Name
-			header_up -Remote-Email
-			header_up -X-Remote-User
-			header_up -X-Remote-Groups
-			header_up -X-Remote-Name
-			header_up -X-Remote-Email
-			header_up -X-Forwarded-User
-			header_up -X-Trusted-Proxy-Secret
-		}
-	}
-
-	# Return 404 for non-API paths
-	respond 404
-}
 # webservices-component-end homeassistant
 
 # Ntfy (protected)
@@ -877,6 +784,10 @@ ntfy.{$DOMAIN} {
 		import keycloak_group_allow ntfy admins|operators
 		reverse_proxy ntfy:80
 	}
+}
+ntfy-native.{$DOMAIN} {
+ import access_observability
+ reverse_proxy ntfy:80
 }
 # webservices-component-end ntfy
 
