@@ -21,5 +21,8 @@ grep -Fq 'reverse_proxy searxng:8080' "$caddyfile"
 donetick_block="$(sed -n '/# webservices-component-start donetick/,/# webservices-component-end donetick/p' "$caddyfile")"
 grep -Fq 'reverse_proxy donetick:2021' <<<"$donetick_block"
 grep -Fq 'keepalive off' <<<"$donetick_block"
+# shellcheck disable=SC2016 # {$DOMAIN} is a literal Caddy placeholder.
 matrix_rtc_block="$(sed -n '/matrix-rtc\.{$DOMAIN}/,/^}/p' "$caddyfile")"
 grep -Fq 'reverse_proxy host.containers.internal:7880' <<<"$matrix_rtc_block"
+homeassistant_block="$(sed -n '/# webservices-component-start homeassistant/,/# webservices-component-end homeassistant/p' "$caddyfile")"
+grep -Fq 'keycloak_group_allow homeassistant admins|operators|users' <<<"$homeassistant_block"
