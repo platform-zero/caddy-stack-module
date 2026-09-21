@@ -775,7 +775,7 @@ homeassistant.{$DOMAIN}, home.{$DOMAIN} {
 	# All other paths use forward_auth
 	route {
 		import keycloak_auth homeassistant
-		import keycloak_group_allow homeassistant admins|operators
+		import keycloak_group_allow homeassistant admins|operators|users
 		reverse_proxy homeassistant:8123 {
 			header_up -X-Forwarded-For
 			header_up Remote-User {header.Remote-User}
