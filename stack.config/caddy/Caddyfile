@@ -717,6 +717,41 @@ spawner.{$DOMAIN} {
 # webservices-component-start homeassistant
 homeassistant.{$DOMAIN}, home.{$DOMAIN} {
 	import access_observability
+	# The companion app crosses browser cookie stores during external auth. Let
+	# Home Assistant authenticate these requests itself; spoofing this matcher
+	# does not bypass Home Assistant's own credentials or bearer-token checks.
+	@mobile_app header_regexp User-Agent "Home Assistant/"
+	handle @mobile_app {
+		reverse_proxy homeassistant:8123 {
+			header_up -Remote-User
+			header_up -Remote-Groups
+			header_up -Remote-Name
+			header_up -Remote-Email
+			header_up -X-Remote-User
+			header_up -X-Remote-Groups
+			header_up -X-Remote-Name
+			header_up -X-Remote-Email
+			header_up -X-Forwarded-User
+			header_up -X-Trusted-Proxy-Secret
+		}
+	}
+
+	@external_auth query external_auth=1
+	handle @external_auth {
+		reverse_proxy homeassistant:8123 {
+			header_up -Remote-User
+			header_up -Remote-Groups
+			header_up -Remote-Name
+			header_up -Remote-Email
+			header_up -X-Remote-User
+			header_up -X-Remote-Groups
+			header_up -X-Remote-Name
+			header_up -X-Remote-Email
+			header_up -X-Forwarded-User
+			header_up -X-Trusted-Proxy-Secret
+		}
+	}
+
 	# Webhook paths bypass forward_auth
 	@webhooks path /api/webhook/*
 	handle @webhooks {

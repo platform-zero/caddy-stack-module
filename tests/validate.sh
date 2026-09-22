@@ -28,3 +28,5 @@ homeassistant_block="$(sed -n '/# webservices-component-start homeassistant/,/# 
 grep -Fq 'keycloak_group_allow homeassistant admins|operators|users' <<<"$homeassistant_block"
 grep -Fq 'vars homeassistant_upstream_authorization {http.request.header.Authorization}' <<<"$homeassistant_block"
 grep -Fq 'header_up Authorization {vars.homeassistant_upstream_authorization}' <<<"$homeassistant_block"
+grep -Fq '@mobile_app header_regexp User-Agent "Home Assistant/"' <<<"$homeassistant_block"
+grep -Fq '@external_auth query external_auth=1' <<<"$homeassistant_block"
