@@ -30,3 +30,7 @@ grep -Fq 'vars homeassistant_upstream_authorization {http.request.header.Authori
 grep -Fq 'header_up Authorization {vars.homeassistant_upstream_authorization}' <<<"$homeassistant_block"
 grep -Fq '@mobile_app header_regexp User-Agent "Home Assistant/"' <<<"$homeassistant_block"
 grep -Fq '@external_auth query external_auth=1' <<<"$homeassistant_block"
+huly_block="$(sed -n '/# webservices-component-start huly/,/# webservices-component-end huly/p' "$caddyfile")"
+grep -Fq '@huly_openid_callback path /auth/openid/callback /_accounts/auth/openid/callback' <<<"$huly_block"
+grep -Fq 'uri strip_prefix /_accounts' <<<"$huly_block"
+grep -Fq 'reverse_proxy huly-account:3000' <<<"$huly_block"
