@@ -686,6 +686,10 @@ www.{$DOMAIN} {
 # webservices-component-start mailserver
 mail.{$DOMAIN} {
 	import access_observability
+	# Mail clients connect directly, so they need a publicly trusted certificate.
+	tls {
+		issuer acme https://acme-v02.api.letsencrypt.org/directory
+	}
 	respond "Mail endpoint is not served over HTTPS" 404
 }
 # webservices-component-end mailserver
