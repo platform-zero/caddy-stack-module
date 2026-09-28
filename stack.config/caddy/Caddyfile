@@ -823,14 +823,22 @@ home-native.{$DOMAIN} {
 
 # webservices-component-end homeassistant
 
-# Ntfy (protected)
+# Ntfy: native clients authenticate with ntfy; browsers authenticate with Keycloak.
 # webservices-component-start ntfy
 ntfy.{$DOMAIN} {
 	import access_observability
-	route {
-		import keycloak_auth ntfy
-		import keycloak_group_allow ntfy admins|operators
+	@ntfy_client header Authorization *
+	handle @ntfy_client {
 		reverse_proxy ntfy:80
+	}
+	handle {
+		route {
+			import keycloak_auth ntfy
+			import keycloak_group_allow ntfy admins|operators
+			reverse_proxy ntfy:80 {
+				header_up Authorization "{$NTFY_SSO_AUTHORIZATION}"
+			}
+		}
 	}
 }
 ntfy-native.{$DOMAIN} {
