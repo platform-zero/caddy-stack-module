@@ -387,11 +387,7 @@ donetick.{$DOMAIN} {
 }
 donetick-native.{$DOMAIN} {
 	import access_observability
-	@native_api path /api/*
-	handle @native_api {
-		reverse_proxy donetick:2021
-	}
-	respond 404
+	reverse_proxy donetick:2021
 }
 # webservices-component-end donetick
 
