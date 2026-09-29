@@ -21,6 +21,8 @@ services:
       ONBOARDING_TRUSTED_PROXY_SECRET: "${ONBOARDING_TRUSTED_PROXY_SECRET}"
       KOPIA_PROXY_AUTHORIZATION: "${KOPIA_PROXY_AUTHORIZATION}"
       NTFY_SSO_AUTHORIZATION: "${NTFY_SSO_AUTHORIZATION}"
+      NTFY_PUBLISHER_AUTHORIZATION: "${NTFY_PUBLISHER_AUTHORIZATION}"
+      NTFY_NATIVE_GATEWAY_SECRET: "${NTFY_NATIVE_GATEWAY_SECRET}"
       VAULTWARDEN_ORG_IDENTIFIER: "${VAULTWARDEN_ORG_IDENTIFIER}"
       VAULTWARDEN_ORG_ID: "${VAULTWARDEN_ORG_ID}"
       MATRIX_AUTHENTICATION_SERVICE_ACTIVE: "${MATRIX_AUTHENTICATION_SERVICE_ACTIVE:-false}"
@@ -157,5 +159,28 @@ services:
     restart: "unless-stopped"
     extraHosts:
     - "host.docker.internal:host-gateway"
+  ntfy-native-auth:
+    image: "docker.io/library/python:3.13-alpine@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f"
+    containerName: "ntfy-native-auth"
+    lifecycle: "daemon"
+    updatePolicy: "pinned"
+    placement: "rootful"
+    hostNetwork: true
+    dependencies:
+      keycloak-configure: "completed"
+    capDrop:
+    - "ALL"
+    securityOpt:
+    - "no-new-privileges:true"
+    environment:
+      KEYCLOAK_TOKEN_URL: "http://127.0.0.1:25007/realms/webservices/protocol/openid-connect/token"
+      NTFY_NATIVE_CLIENT_SECRET: "${NTFY_NATIVE_CLIENT_SECRET}"
+      NTFY_NATIVE_GATEWAY_SECRET: "${NTFY_NATIVE_GATEWAY_SECRET}"
+    volumes:
+    - "./configs/caddy/ntfy-native-auth.py:/app/ntfy-native-auth.py:ro"
+    command:
+    - "python3"
+    - "/app/ntfy-native-auth.py"
+    restart: "unless-stopped"
 networks: {}
 volumes: {}
