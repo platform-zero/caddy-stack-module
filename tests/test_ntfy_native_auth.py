@@ -49,6 +49,13 @@ class NtfyNativeAuthTest(unittest.TestCase):
         account = {"preferred_username": "new", "groups": ["users", "onboarding_required"]}
         self.assertFalse(auth.permitted(account, "GET", "/new_alerts/ws"))
 
+    def test_wrong_password_attempts_are_limited(self):
+        auth.FAILURES.clear()
+        for _ in range(10):
+            self.assertFalse(auth.rate_limited("someone", "192.0.2.1", failed=True))
+        self.assertTrue(auth.rate_limited("someone", "192.0.2.1"))
+        self.assertFalse(auth.rate_limited("another", "192.0.2.2"))
+
 
 if __name__ == "__main__":
     unittest.main()

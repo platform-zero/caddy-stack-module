@@ -837,6 +837,7 @@ ntfy.{$DOMAIN} {
 			forward_auth 127.0.0.1:25017 {
 				uri /auth
 				header_up X-Ntfy-Gateway-Secret "{$NTFY_NATIVE_GATEWAY_SECRET}"
+				header_up X-Ntfy-Client-IP {client_ip}
 			}
 			reverse_proxy ntfy:80 {
 				header_up Authorization "{$NTFY_SSO_AUTHORIZATION}"

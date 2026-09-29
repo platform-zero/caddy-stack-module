@@ -6,6 +6,9 @@ import binascii
 import json
 import os
 import re
+import threading
+import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlencode, urlsplit
@@ -20,6 +23,27 @@ TOPIC = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 READ_METHODS = {"GET", "HEAD"}
 WRITE_METHODS = {"POST", "PUT"}
 ALERT_TOPICS = {"webservices-alerts", "webservices-critical", "webservices-warnings"}
+FAILURES = {}
+FAILURES_LOCK = threading.Lock()
+
+
+def rate_limited(username, client_ip, failed=False):
+    now = time.monotonic()
+    keys = (("user", username.casefold(), 10), ("ip", client_ip, 30))
+    with FAILURES_LOCK:
+        if len(FAILURES) > 8192:
+            FAILURES.clear()
+        for kind, value, limit in keys:
+            key = (kind, value)
+            attempts = FAILURES.setdefault(key, deque())
+            while attempts and attempts[0] < now - 60:
+                attempts.popleft()
+            if len(attempts) >= limit:
+                return True
+        if failed:
+            for kind, value, _ in keys:
+                FAILURES[(kind, value)].append(now)
+    return False
 
 
 def basic_credentials(value):
@@ -104,8 +128,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(401)
             self.end_headers()
             return
+        client_ip = self.headers.get("X-Ntfy-Client-IP", "unknown")[:128]
+        if rate_limited(credentials[0], client_ip):
+            self.send_response(429)
+            self.end_headers()
+            return
         identity = keycloak_identity(*credentials)
         if not identity:
+            rate_limited(credentials[0], client_ip, failed=True)
             self.send_response(401)
         elif not permitted(identity, self.headers.get("X-Forwarded-Method", ""),
                            self.headers.get("X-Forwarded-Uri", "")):
