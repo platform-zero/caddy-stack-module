@@ -20,6 +20,9 @@ services:
       HOMEASSISTANT_TRUSTED_PROXY_SECRET: "${HOMEASSISTANT_TRUSTED_PROXY_SECRET}"
       ONBOARDING_TRUSTED_PROXY_SECRET: "${ONBOARDING_TRUSTED_PROXY_SECRET}"
       KOPIA_PROXY_AUTHORIZATION: "${KOPIA_PROXY_AUTHORIZATION}"
+      NTFY_SSO_AUTHORIZATION: "${NTFY_SSO_AUTHORIZATION}"
+      NTFY_PUBLISHER_AUTHORIZATION: "${NTFY_PUBLISHER_AUTHORIZATION}"
+      NTFY_NATIVE_GATEWAY_SECRET: "${NTFY_NATIVE_GATEWAY_SECRET}"
       VAULTWARDEN_ORG_IDENTIFIER: "${VAULTWARDEN_ORG_IDENTIFIER}"
       VAULTWARDEN_ORG_ID: "${VAULTWARDEN_ORG_ID}"
       MATRIX_AUTHENTICATION_SERVICE_ACTIVE: "${MATRIX_AUTHENTICATION_SERVICE_ACTIVE:-false}"
@@ -36,6 +39,7 @@ services:
         - "sogo.${DOMAIN}"
         - "jellyfin.${DOMAIN}"
         - "donetick.${DOMAIN}"
+        - "donetick-native.${DOMAIN}"
         - "erpnext.${DOMAIN}"
         - "jupyterhub.${DOMAIN}"
         - "spawner.${DOMAIN}"
@@ -44,6 +48,7 @@ services:
         - "homepage.${DOMAIN}"
         - "seafile.${DOMAIN}"
         - "files-native.${DOMAIN}"
+        - "qbittorrent-native.${DOMAIN}"
         - "onlyoffice.${DOMAIN}"
         - "pipeline.${DOMAIN}"
         - "models.${DOMAIN}"
@@ -91,6 +96,7 @@ services:
         - "sogo.${DOMAIN}"
         - "jellyfin.${DOMAIN}"
         - "donetick.${DOMAIN}"
+        - "donetick-native.${DOMAIN}"
         - "erpnext.${DOMAIN}"
         - "api.bookstack.${DOMAIN}"
         - "planka.${DOMAIN}"
@@ -130,7 +136,7 @@ services:
     health:
       test:
       - "CMD-SHELL"
-      - "test -s /ca/caddy-ca.crt && \\\nwget --quiet --tries=1 --spider --timeout=5\
+      - "QBITTORRENT_NATIVE_BASIC_HASH=$$(caddy hash-password --plaintext \"$$MODEL_CONTEXT_PROXY_AUTH_SECRET\") && export QBITTORRENT_NATIVE_BASIC_HASH && test -s /ca/caddy-ca.crt && \\\nwget --quiet --tries=1 --spider --timeout=5\
         \ http://127.0.0.1:2019/config/ && \\\nwget --quiet --tries=1 --spider --timeout=5\
         \ http://127.0.0.1:2019/reverse_proxy/upstreams && \\\ncaddy validate --config\
         \ /etc/caddy/Caddyfile --adapter caddyfile 2>&1 | grep -q \"Valid configuration\"\
@@ -145,7 +151,7 @@ services:
     - "BUNDLE_SRC=\"/etc/ssl/certs/ca-certificates.crt\"\nif [ ! -f \"$$BUNDLE_SRC\"\
       \ ]; then\n  BUNDLE_SRC=\"/etc/ssl/cert.pem\"\nfi\n\nif [ -f \"$$BUNDLE_SRC\"\
       \ ]; then\n  cp \"$$BUNDLE_SRC\" /ca/caddy-ca.crt\nelse\n  touch /ca/caddy-ca.crt\n\
-      fi\nchmod 755 /ca\nchmod 644 /ca/caddy-ca.crt\n\nrm -f /data/caddy/locks/*.lock\
+      fi\nchmod 755 /ca\nchmod 644 /ca/caddy-ca.crt\n\nexport QBITTORRENT_NATIVE_BASIC_HASH=$$(caddy hash-password --plaintext \"$$MODEL_CONTEXT_PROXY_AUTH_SECRET\")\nrm -f /data/caddy/locks/*.lock\
       \ 2>/dev/null || true\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\
       \ &\ncaddy_pid=$$!\n\ntrap 'kill -TERM \"$$caddy_pid\" 2>/dev/null || true;\
       \ wait \"$$caddy_pid\"' INT TERM\n\nfor _ in $$(seq 1 20); do\n  if [ -f /certs/pki/authorities/local/root.crt\
@@ -156,5 +162,28 @@ services:
     restart: "unless-stopped"
     extraHosts:
     - "host.docker.internal:host-gateway"
+  ntfy-native-auth:
+    image: "docker.io/library/python:3.13-alpine@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f"
+    containerName: "ntfy-native-auth"
+    lifecycle: "daemon"
+    updatePolicy: "pinned"
+    placement: "rootful"
+    hostNetwork: true
+    dependencies:
+      keycloak-configure: "completed"
+    capDrop:
+    - "ALL"
+    securityOpt:
+    - "no-new-privileges:true"
+    environment:
+      KEYCLOAK_TOKEN_URL: "http://127.0.0.1:25007/realms/webservices/protocol/openid-connect/token"
+      NTFY_NATIVE_CLIENT_SECRET: "${NTFY_NATIVE_CLIENT_SECRET}"
+      NTFY_NATIVE_GATEWAY_SECRET: "${NTFY_NATIVE_GATEWAY_SECRET}"
+    volumes:
+    - "./configs/caddy/ntfy-native-auth.py:/app/ntfy-native-auth.py:ro"
+    command:
+    - "python3"
+    - "/app/ntfy-native-auth.py"
+    restart: "unless-stopped"
 networks: {}
 volumes: {}
