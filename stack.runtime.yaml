@@ -36,6 +36,7 @@ services:
         - "sogo.${DOMAIN}"
         - "jellyfin.${DOMAIN}"
         - "donetick.${DOMAIN}"
+        - "donetick-native.${DOMAIN}"
         - "erpnext.${DOMAIN}"
         - "jupyterhub.${DOMAIN}"
         - "spawner.${DOMAIN}"
@@ -44,6 +45,7 @@ services:
         - "homepage.${DOMAIN}"
         - "seafile.${DOMAIN}"
         - "files-native.${DOMAIN}"
+        - "qbittorrent-native.${DOMAIN}"
         - "onlyoffice.${DOMAIN}"
         - "pipeline.${DOMAIN}"
         - "models.${DOMAIN}"
@@ -91,6 +93,7 @@ services:
         - "sogo.${DOMAIN}"
         - "jellyfin.${DOMAIN}"
         - "donetick.${DOMAIN}"
+        - "donetick-native.${DOMAIN}"
         - "erpnext.${DOMAIN}"
         - "api.bookstack.${DOMAIN}"
         - "planka.${DOMAIN}"
@@ -130,7 +133,7 @@ services:
     health:
       test:
       - "CMD-SHELL"
-      - "test -s /ca/caddy-ca.crt && \\\nwget --quiet --tries=1 --spider --timeout=5\
+      - "QBITTORRENT_NATIVE_BASIC_HASH=$$(caddy hash-password --plaintext \"$$MODEL_CONTEXT_PROXY_AUTH_SECRET\") && export QBITTORRENT_NATIVE_BASIC_HASH && test -s /ca/caddy-ca.crt && \\\nwget --quiet --tries=1 --spider --timeout=5\
         \ http://127.0.0.1:2019/config/ && \\\nwget --quiet --tries=1 --spider --timeout=5\
         \ http://127.0.0.1:2019/reverse_proxy/upstreams && \\\ncaddy validate --config\
         \ /etc/caddy/Caddyfile --adapter caddyfile 2>&1 | grep -q \"Valid configuration\"\
@@ -145,7 +148,7 @@ services:
     - "BUNDLE_SRC=\"/etc/ssl/certs/ca-certificates.crt\"\nif [ ! -f \"$$BUNDLE_SRC\"\
       \ ]; then\n  BUNDLE_SRC=\"/etc/ssl/cert.pem\"\nfi\n\nif [ -f \"$$BUNDLE_SRC\"\
       \ ]; then\n  cp \"$$BUNDLE_SRC\" /ca/caddy-ca.crt\nelse\n  touch /ca/caddy-ca.crt\n\
-      fi\nchmod 755 /ca\nchmod 644 /ca/caddy-ca.crt\n\nrm -f /data/caddy/locks/*.lock\
+      fi\nchmod 755 /ca\nchmod 644 /ca/caddy-ca.crt\n\nexport QBITTORRENT_NATIVE_BASIC_HASH=$$(caddy hash-password --plaintext \"$$MODEL_CONTEXT_PROXY_AUTH_SECRET\")\nrm -f /data/caddy/locks/*.lock\
       \ 2>/dev/null || true\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\
       \ &\ncaddy_pid=$$!\n\ntrap 'kill -TERM \"$$caddy_pid\" 2>/dev/null || true;\
       \ wait \"$$caddy_pid\"' INT TERM\n\nfor _ in $$(seq 1 20); do\n  if [ -f /certs/pki/authorities/local/root.crt\

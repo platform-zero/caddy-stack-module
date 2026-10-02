@@ -388,6 +388,10 @@ donetick.{$DOMAIN} {
 		}
 	}
 }
+donetick-native.{$DOMAIN} {
+	import access_observability
+	reverse_proxy donetick:2021
+}
 # webservices-component-end donetick
 
 # ERPNext is protected at the edge; app-local accounts remain ERPNext-managed.
@@ -412,6 +416,24 @@ qbittorrent.{$DOMAIN} {
 			header_up X-Real-IP {remote_host}
 		}
 	}
+}
+qbittorrent-native.{$DOMAIN} {
+    import access_observability
+    @api path /api/v2/*
+    handle @api {
+        route {
+            basic_auth {
+                android-test-runner {$QBITTORRENT_NATIVE_BASIC_HASH}
+            }
+            reverse_proxy qbittorrent:8080 {
+                header_up -Authorization
+                header_up X-Real-IP {remote_host}
+            }
+        }
+    }
+    handle {
+        respond 404
+    }
 }
 # webservices-component-end qbittorrent
 
@@ -462,7 +484,7 @@ seafile.{$DOMAIN}, files.{$DOMAIN} {
 files-native.{$DOMAIN} {
 	import access_observability
 	# Seafile API endpoints
-	@api path /api/* /api2/* /seafdav*
+	@api path /api/* /api2/* /seafdav* /seafhttp/*
 	handle @api {
 		reverse_proxy seafile:80 {
 			header_up -Remote-User
