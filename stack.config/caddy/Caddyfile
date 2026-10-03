@@ -77,6 +77,8 @@
 					request_header -Authorization
 
 					forward_auth keycloak-auth-gateway:4180 {
+					lb_try_duration 10s
+					lb_try_interval 250ms
 					uri /oauth2/auth
 					copy_headers X-Auth-Request-Preferred-Username>Remote-User X-Auth-Request-Groups>Remote-Groups X-Auth-Request-Email>Remote-Email
 					@unauth status 401 403
@@ -581,6 +583,14 @@ element.{$DOMAIN}, chat.{$DOMAIN} {
 	reverse_proxy element:80
 }
 
+# webservices-component-start librechat
+# LibreChat owns its Keycloak OIDC login and callback.
+ai.{$DOMAIN} {
+	import access_observability
+	reverse_proxy librechat:3080
+}
+# webservices-component-end librechat
+
 # MatrixRTC backend for Element Call. Authentication is handled by Matrix OpenID
 # tokens at the MatrixRTC authorization service; do not put edge SSO in this path.
 matrix-rtc.{$DOMAIN} {
@@ -965,3 +975,37 @@ pipeline.{$DOMAIN} {
 	}
 }
 # webservices-component-end pipeline
+
+# webservices-component-start caddy
+# Keycloak authenticates browser users; the local Unix socket is the only
+# path to the privileged control backend. The backend checks roles again.
+control.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth control
+		import keycloak_group_allow control admins|operators|users
+		@p0_operator path /ops /ops/*
+		handle @p0_operator {
+			import keycloak_group_allow control-ops admins|operators
+			reverse_proxy unix//run/p0-control/http.sock
+		}
+		handle {
+			reverse_proxy unix//run/p0-control/http.sock
+		}
+	}
+}
+# Device clients authenticate with personal, revocable P0 agent tokens.
+api.{$DOMAIN} {
+	import access_observability
+	@p0_agent_api path /v1/models /v1/chat/completions
+	handle @p0_agent_api {
+		request_header -X-P0-Subject
+		request_header -Remote-User
+		request_header -Remote-Groups
+		reverse_proxy 192.168.122.235:24838
+	}
+	handle {
+		respond 404
+	}
+}
+# webservices-component-end caddy
