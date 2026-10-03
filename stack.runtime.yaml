@@ -127,6 +127,7 @@ services:
     - "caddy_certs:/certs"
     - "caddy_ca:/ca"
     - "./configs/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
+    - "/run/p0-control:/run/p0-control:ro"
     - "./configs/vaultwarden/index.html:/srv/vaultwarden/index.html:ro"
     - "/var/log/webservices/caddy:/var/log/caddy"
     ports:
