@@ -930,3 +930,23 @@ pipeline.{$DOMAIN} {
 	}
 }
 # webservices-component-end pipeline
+
+# webservices-component-start p0-control
+# Keycloak authenticates browser users; the local Unix socket is the only
+# path to the privileged control backend. The backend checks roles again.
+control.{$DOMAIN} {
+	import access_observability
+	route {
+		import keycloak_auth control
+		import keycloak_group_allow control admins|operators|users
+		@p0_operator path /ops /ops/*
+		handle @p0_operator {
+			import keycloak_group_allow control-ops admins|operators
+			reverse_proxy unix//run/p0-control/http.sock
+		}
+		handle {
+			reverse_proxy unix//run/p0-control/http.sock
+		}
+	}
+}
+# webservices-component-end p0-control

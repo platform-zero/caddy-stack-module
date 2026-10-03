@@ -30,3 +30,11 @@ grep -Fq 'vars homeassistant_upstream_authorization {http.request.header.Authori
 grep -Fq 'header_up Authorization {vars.homeassistant_upstream_authorization}' <<<"$homeassistant_block"
 grep -Fq '@mobile_app header_regexp User-Agent "Home Assistant/"' <<<"$homeassistant_block"
 grep -Fq '@external_auth query external_auth=1' <<<"$homeassistant_block"
+
+# Platform Zero browser controls require Keycloak and a local-only upstream.
+# shellcheck disable=SC2016 # literal Caddy placeholder
+grep -Fq 'control.{$DOMAIN}' "$caddyfile"
+grep -Fq 'keycloak_group_allow control admins|operators|users' "$caddyfile"
+grep -Fq 'keycloak_group_allow control-ops admins|operators' "$caddyfile"
+grep -Fq 'reverse_proxy unix//run/p0-control/http.sock' "$caddyfile"
+grep -Fq '/run/p0-control:/run/p0-control:ro' "$repo_root/stack.runtime.yaml"
