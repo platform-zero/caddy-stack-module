@@ -77,6 +77,8 @@
 					request_header -Authorization
 
 					forward_auth keycloak-auth-gateway:4180 {
+					lb_try_duration 10s
+					lb_try_interval 250ms
 					uri /oauth2/auth
 					copy_headers X-Auth-Request-Preferred-Username>Remote-User X-Auth-Request-Groups>Remote-Groups X-Auth-Request-Email>Remote-Email
 					@unauth status 401 403
