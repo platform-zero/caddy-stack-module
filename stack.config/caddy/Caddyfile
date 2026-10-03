@@ -578,6 +578,14 @@ element.{$DOMAIN}, chat.{$DOMAIN} {
 	reverse_proxy element:80
 }
 
+# webservices-component-start librechat
+# LibreChat owns its Keycloak OIDC login and callback.
+ai.{$DOMAIN} {
+	import access_observability
+	reverse_proxy librechat:3080
+}
+# webservices-component-end librechat
+
 # MatrixRTC backend for Element Call. Authentication is handled by Matrix OpenID
 # tokens at the MatrixRTC authorization service; do not put edge SSO in this path.
 matrix-rtc.{$DOMAIN} {

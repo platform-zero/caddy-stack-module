@@ -31,6 +31,11 @@ grep -Fq 'header_up Authorization {vars.homeassistant_upstream_authorization}' <
 grep -Fq '@mobile_app header_regexp User-Agent "Home Assistant/"' <<<"$homeassistant_block"
 grep -Fq '@external_auth query external_auth=1' <<<"$homeassistant_block"
 
+# LibreChat handles its own OIDC login; Caddy only routes the app.
+# shellcheck disable=SC2016 # literal Caddy placeholder
+grep -Fq 'ai.{$DOMAIN}' "$caddyfile"
+grep -Fq 'reverse_proxy librechat:3080' "$caddyfile"
+
 # Platform Zero browser controls require Keycloak and a local-only upstream.
 # shellcheck disable=SC2016 # literal Caddy placeholder
 grep -Fq 'control.{$DOMAIN}' "$caddyfile"
