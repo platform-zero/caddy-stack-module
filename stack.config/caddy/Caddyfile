@@ -931,7 +931,7 @@ pipeline.{$DOMAIN} {
 }
 # webservices-component-end pipeline
 
-# webservices-component-start p0-control
+# webservices-component-start caddy
 # Keycloak authenticates browser users; the local Unix socket is the only
 # path to the privileged control backend. The backend checks roles again.
 control.{$DOMAIN} {
@@ -949,4 +949,4 @@ control.{$DOMAIN} {
 		}
 	}
 }
-# webservices-component-end p0-control
+# webservices-component-end caddy
