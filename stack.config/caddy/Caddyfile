@@ -957,4 +957,18 @@ control.{$DOMAIN} {
 		}
 	}
 }
+# Device clients authenticate with personal, revocable P0 agent tokens.
+api.{$DOMAIN} {
+	import access_observability
+	@p0_agent_api path /v1/models /v1/chat/completions
+	handle @p0_agent_api {
+		request_header -X-P0-Subject
+		request_header -Remote-User
+		request_header -Remote-Groups
+		reverse_proxy 192.168.122.235:24838
+	}
+	handle {
+		respond 404
+	}
+}
 # webservices-component-end caddy
