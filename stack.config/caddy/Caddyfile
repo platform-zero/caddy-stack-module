@@ -899,7 +899,24 @@ ntfy.{$DOMAIN} {
 	}
 }
 ntfy-native.{$DOMAIN} {
-	redir https://ntfy.{$DOMAIN}{uri} permanent
+	import access_observability
+	@ntfy_native header_regexp Authorization (?i)^Basic[[:space:]]
+	handle @ntfy_native {
+		route {
+			forward_auth 127.0.0.1:25017 {
+				uri /auth
+				header_up X-Ntfy-Gateway-Secret "{$NTFY_NATIVE_GATEWAY_SECRET}"
+				header_up X-Ntfy-Client-IP {client_ip}
+			}
+			reverse_proxy ntfy:80 {
+				header_up Authorization "{$NTFY_SSO_AUTHORIZATION}"
+				stream_timeout 30m
+			}
+		}
+	}
+	handle {
+		respond "Native ntfy authentication required" 401
+	}
 }
 # webservices-component-end ntfy
 
