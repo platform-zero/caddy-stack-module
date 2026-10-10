@@ -18,6 +18,19 @@ grep -Fq "*.apps.{\$DOMAIN}" "$caddyfile"
 grep -Fq 'keycloak_group_allow workload-spawner admins|operators' "$caddyfile"
 grep -Fq "websearch.{\$DOMAIN}" "$caddyfile"
 grep -Fq 'reverse_proxy searxng:8080' "$caddyfile"
+python3 - "$caddyfile" <<'PY'
+from pathlib import Path
+import sys
+source=Path(sys.argv[1]).read_text()
+block=source.split('ntfy.{$DOMAIN} {',1)[1].split('ntfy-native.{$DOMAIN} {',1)[0]
+assert '@ntfy_account_token header_regexp Authorization ^Bearer[[:space:]]tk_[A-Za-z0-9]+$' in block
+native=block.split('handle @ntfy_account_token {',1)[1].split('@ntfy_publisher',1)[0]
+assert 'reverse_proxy ntfy:80' in native
+assert 'header_up Authorization' not in native
+assert 'forward_auth' not in native
+assert 'keycloak_auth ntfy' in block and '@ntfy_native' in block
+assert block.index('handle @ntfy_account_token') < block.index('import keycloak_auth ntfy')
+PY
 mastodon_block="$(sed -n '/# webservices-component-start mastodon/,/# webservices-component-end mastodon/p' "$caddyfile")"
 grep -Fq '@mastodon_streaming path /api/v1/streaming /api/v1/streaming/*' <<<"$mastodon_block"
 grep -Fq 'reverse_proxy @mastodon_streaming mastodon-streaming:4000' <<<"$mastodon_block"

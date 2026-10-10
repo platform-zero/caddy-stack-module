@@ -870,6 +870,14 @@ home-native.{$DOMAIN} {
 # webservices-component-start ntfy
 ntfy.{$DOMAIN} {
 	import access_observability
+	# Native account tokens remain end-to-end credentials. Never rewrite them
+	# to the SSO service token: ntfy validates expiry, account and exact-topic ACL.
+	@ntfy_account_token header_regexp Authorization ^Bearer[[:space:]]tk_[A-Za-z0-9]+$
+	handle @ntfy_account_token {
+		reverse_proxy ntfy:80 {
+			stream_timeout 30m
+		}
+	}
 	@ntfy_publisher header Authorization "{$NTFY_PUBLISHER_AUTHORIZATION}"
 	handle @ntfy_publisher {
 		reverse_proxy ntfy:80
