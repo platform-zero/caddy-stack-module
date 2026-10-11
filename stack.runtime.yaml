@@ -12,6 +12,7 @@ services:
     environment:
       DOMAIN: "${DOMAIN}"
       STACK_ADMIN_EMAIL: "${STACK_ADMIN_EMAIL}"
+      CADDY_MAIL_TLS_ISSUER: "${CADDY_MAIL_TLS_ISSUER:-acme https://acme-v02.api.letsencrypt.org/directory}"
       MAIL_DOMAIN: "${MAIL_DOMAIN}"
       OPENSEARCH_BASIC_AUTH: "${OPENSEARCH_BASIC_AUTH}"
       BOOKSTACK_INTERNAL_API_TOKEN: "${BOOKSTACK_INTERNAL_API_TOKEN}"
