@@ -954,13 +954,31 @@ forgejo.{$DOMAIN} {
 # webservices-component-end forgejo
 
 # webservices-component-start searxng
-# SearXNG private metasearch UI and JSON API.
+# Browser SSO remains separate from the scoped machine search capability.
 websearch.{$DOMAIN} {
 	import access_observability
 	route {
-		import keycloak_auth websearch
-		import keycloak_group_allow websearch admins|operators|agents
-		reverse_proxy searxng:8080
+		@p0_websearch_machine {
+			method GET POST
+			path /search
+			header Authorization "Basic *"
+		}
+		handle @p0_websearch_machine {
+			# Empty import glob means zero accounts, not anonymous access.
+			# Only the privileged scoped-capability installer owns this namespace.
+			basic_auth bcrypt "p0-websearch" {
+				import /data/p0-search-access/accounts/*.caddy
+			}
+			reverse_proxy searxng:8080 {
+				header_up -Authorization
+				header_up -Cookie
+			}
+		}
+		handle {
+			import keycloak_auth websearch
+			import keycloak_group_allow websearch admins|operators|agents
+			reverse_proxy searxng:8080
+		}
 	}
 }
 # webservices-component-end searxng
