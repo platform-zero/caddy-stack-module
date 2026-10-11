@@ -23,6 +23,13 @@ class ScopedSearchRoute(unittest.TestCase):
         self.assertNotIn('keycloak_auth', machine)
         self.assertNotIn('{$', machine)
 
+    def test_startup_and_health_hash_only_through_private_stdin(self):
+        runtime = (SOURCE.parents[2] / 'stack.runtime.yaml').read_text()
+        self.assertNotIn('hash-password --plaintext', runtime)
+        self.assertEqual(runtime.count('caddy hash-password --algorithm bcrypt --bcrypt-cost 14'), 2)
+        self.assertEqual(runtime.count("printf '%s'"), 2)
+        self.assertIn('|| exit 1', runtime)
+
     def test_browser_sso_and_group_policy_are_preserved(self):
         browser = self.route.split('\n\t\thandle {', 1)[1]
         self.assertIn('import keycloak_auth websearch', browser)
