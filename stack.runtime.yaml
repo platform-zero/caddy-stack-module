@@ -2,6 +2,12 @@
 schemaVersion: 1
 module: "caddy"
 target: "core"
+# This volume contains only the exported public trust anchor, not Caddy's
+# certificate/private-key store. All authority domains must read the same CA.
+volumes:
+  caddy_ca:
+    hostPath: "${STACK_VOLUME_ROOT}/caddy_ca"
+    rootlessStrategy: "shared"
 services:
   caddy:
     image: "caddy:2.11.3@sha256:ec18ee54aab3315c22e25f3b2babda73ff8007d39b13b3bd1bfffa2f0444c7d9"
