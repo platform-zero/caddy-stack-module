@@ -27,7 +27,9 @@ class ScopedSearchRoute(unittest.TestCase):
         runtime = (SOURCE.parents[2] / 'stack.runtime.yaml').read_text()
         self.assertNotIn('hash-password --plaintext', runtime)
         self.assertEqual(runtime.count('caddy hash-password --algorithm bcrypt --bcrypt-cost 14'), 2)
-        self.assertEqual(runtime.count("printf '%s'"), 2)
+        # Native Caddy reads a line: unterminated private stdin returns EOF.
+        self.assertEqual(runtime.count("printf '%s\\\\n'"), 2)
+        self.assertNotIn("printf '%s'", runtime)
         self.assertIn('|| exit 1', runtime)
 
     def test_browser_sso_and_group_policy_are_preserved(self):
