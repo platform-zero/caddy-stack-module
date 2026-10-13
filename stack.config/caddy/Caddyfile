@@ -870,6 +870,12 @@ home-native.{$DOMAIN} {
 # webservices-component-start ntfy
 ntfy.{$DOMAIN} {
 	import access_observability
+	# Native scoped tokens are authenticated/authorized by ntfy itself. Never
+	# replace their owner-scoped credential with the browser SSO identity.
+	@ntfy_owner_token header_regexp Authorization ^Bearer[[:space:]]+tk_[A-Za-z0-9]+$
+	handle @ntfy_owner_token {
+		reverse_proxy ntfy:80
+	}
 	@ntfy_publisher header Authorization "{$NTFY_PUBLISHER_AUTHORIZATION}"
 	handle @ntfy_publisher {
 		reverse_proxy ntfy:80
